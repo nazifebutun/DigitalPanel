@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Okul Ekranı</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0b1220;--card:#121c34;--border:#1e2a4a;--text:#e8eefc;--muted:#9fb0d9;--hi:#2bd576;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu}
+    header{display:flex;align-items:center;justify-content:space-between;padding:20px 28px;background:#0f182b;border-bottom:1px solid var(--border);position:sticky;top:0}
+    h1{margin:0;font-size:26px;font-weight:800}
+    .clock{font-variant-numeric:tabular-nums}
+    .wrap{max-width:1200px;margin:0 auto;padding:22px}
+    .grid{display:grid;grid-template-columns:2fr 1fr;gap:18px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:0 10px 26px rgba(0,0,0,.25)}
+    .title{margin:0 0 8px;font-size:18px;font-weight:800}
+    .date{color:var(--muted);font-size:12px}
+    ul{margin:8px 0 0 20px}
+    a{color:var(--hi);text-decoration:none}
+    a:hover{text-decoration:underline}
+    @media (max-width:1100px){.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Sivas Selçuk Anadolu Lisesi – Taş Bina</h1>
+    <div class="clock" id="clk">--:--:--</div>
+  </header>
+
+  <div class="wrap">
+    <div class="grid">
+      <!-- Sol kolon: duyurular büyük kart -->
+      <section class="card" style="grid-column:1 / -1">
+        <div class="title">Duyurular</div>
+        {% if items and items|length>0 %}
+          <ul>
+            {% for it in items %}
+              <li>
+                <strong>{{ it.title }}</strong> — {{ it.content }}
+                <span class="date">({{ it.created_at }})</span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p>Henüz duyuru yok.</p>
+        {% endif %}
+      </section>
+
+      <!-- Yaklaşan sınavlar -->
+      <section class="card">
+        <div class="title">Yaklaşan Sınavlar (30 gün)</div>
+        {% if upcoming and upcoming|length>0 %}
+          <ul>
+            {% for e in upcoming %}
+              <li><strong>{{ e.date }}</strong> — {{ e.title }} {% if e.note %}<em>({{ e.note }})</em>{% endif %}</li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p>Kayıtlı sınav yok.</p>
+        {% endif %}
+      </section>
+
+      <!-- Bugün nöbet -->
+      <section class="card">
+        <div class="title">Bugün Nöbetçi ({{ today }})</div>
+        {% if todays and todays|length>0 %}
+          <ul>
+            {% for d in todays %}
+              <li>{{ d.teacher_name }}</li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p>Kayıt yok.</p>
+        {% endif %}
+      </section>
+
+      <!-- Motivasyon -->
+      <section class="card">
+        <div class="title">Motivasyon</div>
+        <blockquote style="margin:6px 0 0;line-height:1.5">
+          <span id="qtext">“{{ quote.text if quote else 'Bir motivasyon sözü ekleyin.' }}”</span>
+          <br>
+          <small id="qauth" class="date">
+            {% if quote and quote.author %}— {{ quote.author }}{% endif %}
+          </small>
+        </blockquote>
+      </section>
+
+
+      <!-- Kaynaklar -->
+      <section class="card">
+        <div class="title">Kaynaklar (son 5)</div>
+        {% if res_list and res_list|length>0 %}
+          <ul>
+            {% for r in res_list %}
+              <li><a href="{{ r.url }}" target="_blank" rel="noopener noreferrer">{{ r.title }}</a>{% if r.subject %} — {{ r.subject }}{% endif %}</li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p>Kaynak ekleyin.</p>
+        {% endif %}
+      </section>
+    </div>
+  </div>
+<!-- YKS Geri Sayım -->
+<section class="card">
+  <div class="title">YKS'ye Kalan</div>
+  <p style="margin:6px 0 10px">
+    <strong>{{ days_left }}</strong> gün kaldı (hedef: {{ yks_date }})
+  </p>
+  <div style="background:#0e1730;border:1px solid var(--border);border-radius:10px;overflow:hidden;height:16px">
+    <div id="progress-bar" style="height:100%;width:0%;background:var(--hi);transition:width .6s"></div>
+  </div>
+  <p class="date" style="margin-top:6px">İlerleme: %{{ progress }}</p>
+</section>
+
+<!-- Günün Paragraf Hedefi -->
+<section class="card">
+  <div class="title">Günün Hedefi</div>
+  <p style="margin:6px 0 0">Bugün en az <strong>{{ daily_par_goal }}</strong> paragraf çöz! 💪</p>
+  <p class="date">Paragraf, hız + anlama için en iyi yatırım.</p>
+</section>
+
+  <script>
+    function tick(){
+      const d=new Date();
+      const p=n=>String(n).padStart(2,'0');
+      document.getElementById('clk').textContent=`${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+    }
+    setInterval(tick,1000); tick();
+
+    // Set progress bar width
+    document.getElementById('progress-bar').style.width = '{{ progress }}%';
+
+    // Ekranı periyodik yenile (30 sn)
+    setInterval(()=>location.reload(),30000);
+
+    async function loadRandomQuote(){
+    try{
+      const r = await fetch('/quotes/random');
+      if(!r.ok) return;
+      const j = await r.json();
+      if(!j || !j.text) return;
+      const qtext = document.getElementById('qtext');
+      const qauth = document.getElementById('qauth');
+      qtext.textContent = `“${j.text}”`;
+      qauth.textContent = j.author ? `— ${j.author}` : '';
+    }catch(e){ /* sessiz geç */ }
+  }
+
+  // İlk yüklemede bir kez çek, sonra her 15sn’de bir yenile
+  loadRandomQuote();
+  setInterval(loadRandomQuote, 15000);
+  </script>
+</body>
+</html>

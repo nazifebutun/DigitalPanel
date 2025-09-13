@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Panel – Veri Girişi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0b1220;--card:#121c34;--border:#1e2a4a;--text:#e8eefc;--muted:#9fb0d9;--acc:#2bd576;
+    }
+    *{box-sizing:border-box}
+    body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu;background:var(--bg);color:var(--text);margin:0}
+    header{position:sticky;top:0;background:#0f182b;padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+    h1{margin:0;font-size:22px;font-weight:800}
+    .wrap{max-width:980px;margin:24px auto;padding:0 16px 32px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 16px 8px;margin:0 0 18px;box-shadow:0 10px 26px rgba(0,0,0,.25)}
+    .title{margin:0 0 8px;font-size:18px;font-weight:700}
+    label{display:block;margin:8px 0 6px;font-weight:600}
+    input,textarea,select{width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;background:#0e1730;color:var(--text)}
+    textarea{resize:vertical;min-height:90px}
+    .row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .row3{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px}
+    button{margin-top:12px;padding:12px 16px;border:0;border-radius:12px;background:#1a2a52;color:#fff;font-weight:800;cursor:pointer}
+    button:hover{filter:brightness(1.05)}
+    .ok{color:#2bd576;margin:6px 0 0}
+    .err{color:#ff7a7a;margin:6px 0 0}
+    .muted{color:var(--muted);font-size:13px}
+    .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+    @media (max-width:900px){.grid2,.row,.row3{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Okul Paneli</h1>
+    <div class="muted">BasicAuth ile korunuyor</div>
+  </header>
+
+  <div class="wrap grid2">
+    <!-- Duyuru -->
+    <section class="card">
+      <h2 class="title">Duyuru Ekle</h2>
+      <form id="f-ann">
+        <label>Başlık</label>
+        <input name="title" required>
+        <label>İçerik</label>
+        <textarea name="content" required></textarea>
+        <button type="submit">Kaydet</button>
+      </form>
+      <p id="msg-ann" class="muted"></p>
+    </section>
+
+    <!-- Nöbetçi Öğretmen -->
+    <section class="card">
+      <h2 class="title">Nöbetçi Öğretmen Ekle</h2>
+      <form id="f-duty" class="row">
+        <div>
+          <label>Öğretmen Adı</label>
+          <input name="teacher_name" required>
+        </div>
+        <div>
+          <label>Tarih</label>
+          <input name="date" type="date" required>
+        </div>
+        <button type="submit">Kaydet</button>
+      </form>
+      <p id="msg-duty" class="muted"></p>
+    </section>
+
+    <!-- Sınav -->
+    <section class="card">
+      <h2 class="title">Yaklaşan Sınav Ekle</h2>
+      <form id="f-exam" class="row3">
+        <div>
+          <label>Başlık</label>
+          <input name="title" placeholder="12. Sınıf YKS Denemesi" required>
+        </div>
+        <div>
+          <label>Tarih</label>
+          <input name="date" type="date" required>
+        </div>
+        <div>
+          <label>Not (ops.)</label>
+          <input name="note" placeholder="1. ve 2. ders">
+        </div>
+        <button type="submit">Kaydet</button>
+      </form>
+      <p id="msg-exam" class="muted"></p>
+    </section>
+
+    <!-- Motivasyon -->
+    <section class="card">
+      <h2 class="title">Motivasyon Sözü Ekle</h2>
+      <form id="f-quote">
+        <label>Söz</label>
+        <textarea name="text" required placeholder="Başarı, hazırlığın fırsatla buluşmasıdır."></textarea>
+        <label>Yazar (ops.)</label>
+        <input name="author" placeholder="Zig Ziglar">
+        <button type="submit">Kaydet</button>
+      </form>
+      <p id="msg-quote" class="muted"></p>
+    </section>
+
+    <!-- Kaynak -->
+    <section class="card">
+      <h2 class="title">Kaynak Ekle</h2>
+      <form id="f-res">
+        <label>Başlık</label>
+        <input name="title" required placeholder="TYT Matematik – Problem Notları">
+        <label>URL</label>
+        <input name="url" required placeholder="https://...">
+        <label>Ders (ops.)</label>
+        <input name="subject" placeholder="Matematik">
+        <button type="submit">Kaydet</button>
+      </form>
+      <p id="msg-res" class="muted"></p>
+    </section>
+  </div>
+
+  <script>
+    async function postForm(formId, url, msgId){
+      const f=document.getElementById(formId);
+      const msg=document.getElementById(msgId);
+      f.addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        const fd=new FormData(f);
+        const res=await fetch(url,{method:'POST',body:fd});
+        if(res.ok){ msg.textContent='✔︎ Kaydedildi'; msg.className='ok'; f.reset(); }
+        else{ msg.textContent='× Kaydedilemedi'; msg.className='err'; }
+      });
+    }
+    postForm('f-ann','/announcements/create-from-form','msg-ann');
+    postForm('f-duty','/duties/create-from-form','msg-duty');
+    postForm('f-exam','/exams/create-from-form','msg-exam');
+    postForm('f-quote','/quotes/create-from-form','msg-quote');
+    postForm('f-res','/resources/create-from-form','msg-res');
+  </script>
+</body>
+</html>
