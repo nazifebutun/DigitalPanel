@@ -1,5 +1,5 @@
-from fastapi import FastAPI, Depends, Request
-from fastapi.responses import RedirectResponse
+from fastapi import FastAPI, Depends, Request, Response
+from fastapi.responses import RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
@@ -28,7 +28,13 @@ app.include_router(resources.router)  # NEW
 BASE_DIR = os.path.dirname(__file__)
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
+@app.get("/hybridaction/{rest:path}", include_in_schema=False)
+async def _ignore_hybridaction(rest: str):
+    return Response(status_code=204)
 
+@app.get("/favicon.ico", include_in_schema=False)
+async def _ignore_favicon():
+    return Response(status_code=204)
 # Basit girişli panel (BasicAuth)
 @app.get("/panel")
 def panel(request: Request, _: bool = Depends(basic_auth)):
